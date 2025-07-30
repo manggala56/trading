@@ -21,6 +21,7 @@
         // Check if time filter should be enabled from environment variable
         // Convert to boolean: 'true' string becomes true, anything else (including undefined) becomes false
         const enableTimeFilter = process.env.ENABLE_JOURNAL_TIME_FILTER === 'true';
+        const timeFilterMinutes = parseInt(process.env.JOURNAL_TIME_FILTER_MINUTES) || 5;
 
         // Initialize query
         let baseQuery = supabaseServer
@@ -30,7 +31,7 @@
 
         // Apply time filter conditionally
         if (enableTimeFilter) {
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const fiveMinutesAgo = new Date(Date.now() - timeFilterMinutes * 60 * 1000).toISOString();
         baseQuery = baseQuery.gte('trade_time', fiveMinutesAgo);
         }
 
