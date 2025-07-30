@@ -32,11 +32,6 @@
 
     // --- Proses penyimpanan data ke Supabase ---
     try {
-        // Asumsi Anda memiliki tabel bernama 'trading_journal' di Supabase
-        // dengan kolom yang sesuai dengan data dari TradingView.
-        // Misalnya: action, symbol, price, strategy_name, time (timestamp), qty
-        // Kolom 'time' dari TradingView adalah Unix timestamp dalam milidetik,
-        // ubah menjadi format tanggal yang bisa disimpan di PostgreSQL jika perlu.
         const timestamp = new Date(parseInt(data.time)); // Konversi ke objek Date
 
             const { error } = await supabase
@@ -65,25 +60,3 @@
             return NextResponse.json({ message: 'Internal server error.', error: error.message }, { status: 500 });
         }
     }
-
-    // Catatan Penting:
-    // 1. Anda perlu membuat tabel 'trading_journal' di Supabase dengan kolom yang sesuai.
-    //    Contoh SQL untuk membuat tabel:
-    /*
-    CREATE TABLE trading_journal (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    action TEXT NOT NULL,
-    symbol TEXT NOT NULL,
-    price NUMERIC NOT NULL,
-    strategy_name TEXT,
-    trade_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    quantity NUMERIC NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-    */
-    // 2. Pastikan Anda mengatur `WEBHOOK_SECRET` di file `.env.local` Anda:
-    //    WEBHOOK_SECRET="your_secure_random_string_here"
-    // 3. Saat mengkonfigurasi webhook di TradingView, URL-nya akan menjadi:
-    //    `https://<your-vercel-deployment-url>/api/webhook`
-    //    Dan di bagian "Message", Anda harus menyertakan secret key Anda:
-    //    `{"action":"{{strategy.order.action}}","symbol":"{{ticker}}","price":"{{strategy.order.price}}","strategy_name":"{{strategy.name}}","time":"{{timenow}}","qty":"{{strategy.order.contracts}}", "secret":"your_secure_random_string_here"}`
