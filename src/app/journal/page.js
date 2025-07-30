@@ -1,11 +1,11 @@
         // import { supabase } from '../../lib/supabase'; 
         import { createServerSupabaseClient } from '../../lib/supabase-server'; 
         import AuthButton from '../../components/AuthButton';
-
+        const tableName = process.env.SUPABASE_JOURNAL_TABLE_NAME || 'trading_journal';
         async function getTradingJournalEntries() {
             const supabase = createServerSupabaseClient();
             const { data, error } = await supabase
-            .from('trading_journal')
+            .from(tableName)
             .select('*')
             .order('trade_time', { ascending: false });
         

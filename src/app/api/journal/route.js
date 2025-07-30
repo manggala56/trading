@@ -15,15 +15,24 @@
         user = fetchedUser;
         }
 
-        // Hitung waktu 5 menit yang lalu dari sekarang
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        // Get table name from environment variable, default to 'trading_journal' if not set
+        const tableName = process.env.SUPABASE_JOURNAL_TABLE_NAME || 'trading_journal';
 
-        // Inisialisasi query dengan filter waktu
+        // Check if time filter should be enabled from environment variable
+        // Convert to boolean: 'true' string becomes true, anything else (including undefined) becomes false
+        const enableTimeFilter = process.env.ENABLE_JOURNAL_TIME_FILTER === 'true';
+
+        // Initialize query
         let baseQuery = supabaseServer
-        .from('trading_journal')
+        .from(tableName) // Use dynamic table name
         .select('*')
-        .gte('trade_time', fiveMinutesAgo) // Hanya data dengan trade_time >= 5 menit yang lalu disable jika tidak perlu
         .order('trade_time', { ascending: false });
+
+        // Apply time filter conditionally
+        if (enableTimeFilter) {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        baseQuery = baseQuery.gte('trade_time', fiveMinutesAgo);
+        }
 
         let query = baseQuery;
         if (user) {
