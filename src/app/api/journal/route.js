@@ -17,9 +17,7 @@
 
         // Get table name from environment variable, default to 'trading_journal' if not set
         const tableName = process.env.SUPABASE_JOURNAL_TABLE_NAME || 'trading_journal';
-
-        // Check if time filter should be enabled from environment variable
-        // Convert to boolean: 'true' string becomes true, anything else (including undefined) becomes false
+        const oneresponse = process.env.ONE_RESPONSE === 'true';
         const enableTimeFilter = process.env.ENABLE_JOURNAL_TIME_FILTER === 'true';
         const timeFilterMinutes = parseInt(process.env.JOURNAL_TIME_FILTER_MINUTES) || 5;
 
@@ -31,8 +29,13 @@
 
         // Apply time filter conditionally
         if (enableTimeFilter) {
-        const fiveMinutesAgo = new Date(Date.now() - timeFilterMinutes * 60 * 1000).toISOString();
-        baseQuery = baseQuery.gte('trade_time', fiveMinutesAgo);
+        const timeFilterValue = new Date(Date.now() - timeFilterMinutes * 60 * 1000).toISOString();
+        baseQuery = baseQuery.gte('trade_time', timeFilterValue);
+        }
+
+        // **[NEW]** If oneresponse is enabled, filter out records already marked as 'used'
+        if (oneresponse) {
+        baseQuery = baseQuery.neq('status', 'used');
         }
 
         let query = baseQuery;
@@ -45,6 +48,25 @@
         if (error) {
         console.error('Error fetching trading journal entries from API:', error);
         return NextResponse.json({ message: 'Failed to fetch journal data.', error: error.message }, { status: 500 });
+        }
+
+        // **[NEW]** If oneresponse is enabled and data was fetched, update the records to 'used'
+        if (oneresponse && data && data.length > 0) {
+        const recordIds = data.map(entry => entry.id);
+
+        // Perform the update asynchronously without awaiting it.
+        // This prevents delaying the API response to the client.
+        supabaseServer
+            .from(tableName)
+            .update({ status: 'used' })
+            .in('id', recordIds)
+            .then(({ error: updateError }) => {
+            if (updateError) {
+                console.error('Error updating records to "used":', updateError.message);
+            } else {
+                console.log(`Successfully marked ${recordIds.length} record(s) as 'used'.`);
+            }
+            });
         }
 
         return NextResponse.json(data, { status: 200 });
